@@ -1,0 +1,54 @@
+services:
+
+  postgres-h:
+    image: "postgres:16.4-alpine3.19"
+    ports:
+      - "5432:5432"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: hotel
+    volumes:
+      - ./db-data/postgres/:/var/lib/postgresql/data/
+
+  api-h:
+    build:
+      context: ./../api-h
+      dockerfile: ./../api-h/api-h.dockerfile
+    restart: always
+    environment:
+      API_KEY: 47f2ac60-6b77-4e12-ae38-577275cfa621
+      API_LISTEN_PORT: 3007
+      DB_USERNAME: postgres
+      DB_HOST: postgres-h
+      DB_NAME: hotel
+      DB_PASSWORD: password
+      DB_PORT: 5432
+    ports:
+      - "3007:3007"
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  web-h:
+    build:
+      context: ./../web-h
+      dockerfile: ./../web-h/web-h.dockerfile
+    restart: always
+    environment:
+      WEB_PORT: 3017
+      API_ACCESS_KEY: 47f2ac60-6b77-4e12-ae38-577275cfa621
+      API_HOSTNAME: api-h
+      API_PORT: 3007
+      WEB_USERNAME: suisui
+      WEB_USER_PASSWORD: password
+      SHOP_NAME: "Sui-Sui Hotel"
+    ports:
+      - "3017:3017"
+    deploy:
+      mode: replicated
+      replicas: 1

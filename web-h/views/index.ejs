@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Request Tracker</title>
+  <link rel="stylesheet" href="./styles/main.css">
+</head>
+
+<body>
+  <div class="box" id="heading">
+    <a href="/">
+      <h1><%= locals.currentTime %></h1>
+    </a>
+  </div>
+
+  <div class="box" id="service-header">
+    <form class="tab-view tab-view-height-auto" action="/service" method="post">
+      <% serviceList.forEach(function(service) { %>
+        <input type="submit" name="service" value="<%= service.id %>" id="<%= service.id %>">
+        <label for="<%= service.id %>" style="background-color: <%= service.color %>;">
+          <%= service.main_name %>
+        </label>
+        <% }); %>
+
+      <% if (serviceProfile == 2) { %>
+        <input type="submit" name="service" value="newFood" id="tab">
+        <label for="tab">Food Menu</label>
+      <% } %>
+
+      <% if (serviceProfile == 3) { %>
+        <input type="submit" name="service" value="addGuest" id="tab">
+        <label for="tab">Add Guest</label>
+      <% } %>
+    </form>
+
+      <% if (serviceProfile == 1) { %>
+        <h2 class="" style="background-color: <%= serviceList[serviceProfile -1].color %>;">
+          Total Active room service Request: <%= requestTotal %></h2>
+      <% } %>
+
+      <% if (serviceProfile == 2) { %>
+        <h2 class="" style="background-color: <%= serviceList[serviceProfile -1].color %>;">
+          Total Active kitchen Request: <%= requestTotal %></h2>
+      <% } %>
+        
+      <% if (serviceProfile == 3) { %>
+        <h2 class="" style="background-color: <%= serviceList[serviceProfile -1].color %>;">
+          Total Active front desk Request: <%= requestTotal %></h2>
+      <% } %>
+    
+  </div>
+
+
+
+  <div class="box" id="service-list">
+    <ul id=""></ul>
+      <% requestList.forEach(request=> { %>
+        <li>
+          <h3>
+            Room Number: <%=request.room_number%>
+          </h3>
+          <p>
+            Request: <%=request.request_description%>
+          </p>
+          <small>
+            Quantity: <%=request.quantity%>
+          </small>
+          <small>
+            Requested time: <%=request.requested_d %>
+          </small>
+          <small>Acknowledged: <%=request.acknowledged%> </small>
+          <small>Delivered: <%=request.delivered%> </small>
+
+          <form id="" method="get">
+            <% if (!request.acknowledged) { %>
+              <input id="ack" type="submit" value="Acknowledged" formaction="/rstatus/ack/<%=request.statusid%>">
+            <% } %>
+              <input id="deliver" type="submit" value="Delivered" formaction="/rstatus/delivered/<%=request.statusid%>">
+          </form>
+
+        </li>
+        <% }); %>
+    </ul>
+  </div>
+
+  
+
+  
+  <script>
+    
+  </script>
+  <footer>Copyright © Simapps Solution <%= new Date().getFullYear() %></footer>
+</body>
+
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles/foodmenu.css" />
+    <title>Food Menu</title>
+</head>
+<body>
+    <div class="" id="">
+        <a href="/"><h2 id="home-link">Home</h2></a>
+        <a href="/foodmenu"><h1>Listing Food Items</h1></a>
+    </div> 
+    
+    <div class="box" id="food-list">
+    <a id="newFoodBtn" href="/newfood">Add New Food Item</a>
+    <ul id="">
+      <% foodList.forEach(food=> { %>
+        <li>
+          <h3>
+            <%=food.food_title%>
+          </h3>
+          <p>
+            <%=food.food_description%>
+          </p>
+          <small>
+            Type: <%=food.food_type%>
+          </small>
+          <small>
+            Price: <%=food.price %>
+          </small>
+
+          <form id="" method="get">     
+              <input id="edit" type="submit" value="Edit" formaction="/fooditem/edit/<%= food.id %>">
+              <input id="delete" type="submit" value="Delete" formaction="/fooditem/delete/<%= food.id %>">
+          </form>
+
+        </li>
+        <% }); %>
+    </ul>
+  </div>
+    <footer>Copyright © Simapps Solution <%= new Date().getFullYear() %></footer>
+</body>
+</html>

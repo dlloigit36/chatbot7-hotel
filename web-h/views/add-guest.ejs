@@ -1,0 +1,98 @@
+<%- include('partials/header.ejs'); -%>
+
+  <div class="" id="">
+    <a href="/"><h2 id="home-link">Home</h2></a>
+    <a href="/addguest"><h1>Search To Add New Guest Stay</h1></a>
+  </div> 
+
+  <% if (locals.searchMobile) { %>
+    <div class="" id="search-box">
+      <div>
+        <form id="">
+          <label for="idTel">Guest Mobile Number:</label>
+          <input type="number" id="" name="tel" replaceholder="enter mobile phone number include country code without + and -" required="true">
+
+          <label for="submit"></label>
+          <input id="search" type="submit" value="Search" formaction="/searchbytel" formmethod="post">
+          <!-- <input id="bt-home" type="submit" value="Home" formaction="/" formmethod="get"> -->
+        </form>
+      </div>
+    </div>
+  <% } %> 
+
+  <% if (locals.foundAddStay) { %>
+    <div class="edit-box" id="">
+      <% guestDetail.forEach(guest => { %>
+       <h2>Found guest, adding new stay 😃</h2>
+        <form id="myForm" method="post">
+          <label for="guestId">Guest ID:</label>
+          <input type="text" id="" name="guestId" value="<%= guest.id %>" readonly="true">
+
+          <label for="fistNameInput">First Name:</label>
+          <input type="text" id="" name="guestFirstname" value="<%= guest.first_name %>" required="true">
+
+          <label for="lastNameInput">Last Name:</label>
+          <input type="text" id="" name="guestLastName" value="<%= guest.last_name %>" required="true">
+
+          <label for="guestTelInput">Mobile Number:</label>
+          <input type="number" id="" name="guestTel" value="<%= guest.tel %>" readonly="true">
+
+          <label for="roomNumber">Room Number:</label>
+          <input type="text" id="" name="roomNumber" placeholder="enter room number" list="room-number-list" required="true">
+
+          <label for="checkIn">Check-In:</label>
+          <input type="datetime-local" id="" name="checkInDate" required="true">
+
+          <label for="checkIn">Check-Out:</label>
+          <input type="datetime-local" id="" name="checkOutDate" required="true">
+
+          <label for="submit"></label>
+          <input id="submit" type="submit" value="Submit" formaction="/addgueststay">
+        </form>
+      <% }) %>
+      
+    </div>
+  <% } %>
+
+  
+
+<datalist id="room-number-list">
+  <option value="10-01"></option>
+  <option value="10-02"></option>
+  <option value="10-03"></option>
+  <option value="11-01"></option>
+  <option value="12-02"></option>
+</datalist>
+
+  <% if (locals.newAddStay) { %>
+    <div class="edit-box" id="">
+      <h2>No guest record found, adding guest contact and stay</h2>
+      <form id="myForm" method="post">
+        <label for="fistNameInput">First Name:</label>
+        <input type="text" id="" name="guestFirstname" placeholder="guest first name" required="true">
+
+        <label for="lastNameInput">Last Name:</label>
+        <input type="text" id="" name="guestLastName" placeholder="guest last name" required="true">
+
+        <label for="guestTelInput">Mobile Number:</label>
+        <input type="number" id="" name="guestTel" value="<%= locals.telInSearch %>" placeholder="guest mobile phone number" required="true">
+
+        <label for="roomNumber">Room Number:</label>
+        <input type="text" id="" name="roomNumber" placeholder="enter room number" list="room-number-list" required="true">
+
+        <label for="checkIn">Check-In:</label>
+        <input type="datetime-local" id="" name="checkInDate" required="true">
+
+        <label for="checkIn">Check-Out:</label>
+        <input type="datetime-local" id="" name="checkOutDate" required="true">
+
+        <label for="submit"></label>
+        <input id="submit" type="submit" value="Add" formaction="/addguestandstay">
+      </form>
+    </div>
+  <% } %>
+
+  
+
+  <script src="/scripts/add-guest.js" charset="utf-8"></script>
+<%- include('partials/footer.ejs'); -%>

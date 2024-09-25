@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles/modifyfood.css" />
+    <title>Add New Food</title>
+</head>
+<body>
+    <div class="" id="">
+        <a href="/foodmenu"><h2 id="home-link">Back</h2></a>
+        <% if (locals.editFoodItem) { %>
+          <a href=""><h1 id="home-link">Edit Selected Food Item</h1></a>
+        <% } else { %>
+          <a href="/newfood"><h1 id="home-link">Adding New Food Item</h1></a>
+        <% } %>  
+    </div> 
+    
+    <div class="edit-box" id="">
+      <% if (locals.editFoodItem) { %>
+        <form id="" method="post">
+          <label for="foodTitle">Title:</label>
+          <input type="text" id="" name="foodTitle" value="<%= editFoodItem.food_title %>" required="true">
+
+          <label for="foodDescription">Description:</label>
+          <textarea name="foodDescription" required rows="5"><%= editFoodItem.food_description %></textarea>
+
+          <label for="foodType">Type:</label>
+          <select id="foodType" name="foodType">
+            <option value="<%= editFoodItem.type %>">--please choose one--</option>
+            <option value="asian">asian</option>
+            <option value="western">western</option>
+            <option value="snack">snack</option>
+            <option value="drink">drink</option>
+          </select>
+
+          <label for="foodPrice">Price:</label>
+          <input type="text" id="" name="foodPrice" value="<%= editFoodItem.price %>" required="true">
+
+          <label for="submit"></label>
+          <input id="btn-update" type="submit" value="Update" formaction="/fooditem/edit/<%= editFoodItem.id %>">
+        </form>
+
+      <% } else { %>
+        <form id="myForm" method="post">
+          <label for="foodTitle">Title:</label>
+          <input type="text" id="" name="foodTitle" placeholder="food name" required="true">
+
+          <label for="foodDescription">Description:</label>
+          <textarea name="foodDescription" placeholder="food description" required rows="5"></textarea>
+
+          <label for="foodType">Type:</label>
+          <select id="foodType" name="foodType">
+            <option value="">--Please choose food type--</option>
+            <option value="asian">asian</option>
+            <option value="western">western</option>
+            <option value="snack">snack</option>
+            <option value="drink">drink</option>
+          </select>
+
+          <label for="foodPrice">Price:</label>
+          <input type="text" id="" name="foodPrice" placeholder="price" required="true">
+
+          <label for="submit"></label>
+          <input id="submit" type="submit" value="Add" formaction="/addnewfood">
+        </form>
+
+      <% } %>
+       
+       
+      
+    </div>
+
+    
+    <footer>Copyright © Simapps Solution <%= new Date().getFullYear() %></footer>
+</body>
+</html>
