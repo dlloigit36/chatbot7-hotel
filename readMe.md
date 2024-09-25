@@ -5,9 +5,9 @@
 
 # To run this application, only Docker engine needed
 1. go to folder ./project-d
-2. run docker compose up -d
+2. run "docker compose up -d"
 3. access with browser URL http://localhost:3017/
-4. to stop run docker compose down inside ./project-d folder
+4. to stop run "docker compose down" inside ./project-d folder
 
 # Notes
 1. file sample-query.sql with some sql command to create database and other CRUD operation command.
