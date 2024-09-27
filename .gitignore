@@ -1,0 +1,3 @@
+/project-d/db-data/postgres/
+.env
+node_modules
