@@ -11,3 +11,5 @@
 
 # Notes
 1. file sample-query.sql with some sql command to create database and other CRUD operation command.
+2. manually create tables in hotel database run "create-table.sql" with pgadmin query tool.
+3. manually create some guest_request run INSERT command in "guest-request-sample.sql" with pgadmin query tool.
