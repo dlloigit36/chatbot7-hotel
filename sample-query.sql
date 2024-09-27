@@ -77,21 +77,21 @@ CREATE TABLE guest_request (
     sub_service_id INTEGER UNIQUE REFERENCES sub_service_type(id)  
 )
 
-INSERT INTO guest_request (request_description, quantity, stay_id, main_service_id, sub_service_id)
-    VALUES ('need more towel-12', 2, 1, 1, 1),
-    ('clean room-12', 2, 2, 1, 5),
-    ('order food fried mee-12', 1, 3, 2, 2);
+INSERT INTO guest_request (request_description, quantity, stay_id, main_service_id)
+    VALUES ('need more towel-12', 2, 1, 1),
+    ('clean room-12', 2, 2, 1),
+    ('order food fried mee-12', 1, 3, 2);
 
--- more data ainto guest_request table
+-- more data into guest_request table
 INSERT INTO guest_request (request_description, stay_id, main_service_id)
-    VALUES ('complaint dirty room', 1, 3),
-    ('complaint noise', 1, 3),
-    ('ask to extend stay', 1, 3);
+    VALUES ('complaint dirty room-10', 1, 3),
+    ('complaint noise-11', 1, 3),
+    ('ask to extend stay-12', 1, 3);
 
-INSERT INTO guest_request (request_description, quantity, stay_id, main_service_id, sub_service_id)
-    VALUES ('need more towel', 10, 2, 1, 1),
-    ('clean room', 2, 3, 1, 5),
-    ('order food fried mee', 1, 1, 2, 2);
+INSERT INTO guest_request (request_description, quantity, stay_id, main_service_id)
+    VALUES ('need more towel-7', 10, 2, 1),
+    ('clean room-8', 2, 3, 1),
+    ('order food fried mee-9', 1, 1, 2);
 
 CREATE TABLE request_status (
     id SERIAL PRIMARY KEY,
