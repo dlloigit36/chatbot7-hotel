@@ -1,3 +1,7 @@
+-- create type of services
+INSERT INTO service_type (main_name, color)
+    VALUES ('room service', 'aqua'), ('kitchen', 'olive'), ('front desk', 'teal')
+    
 -- sample guest detail
 INSERT INTO guest_detail (first_name, last_name, tel)
     VALUES ('james', 'bonds', 60121234567), ('amy', 'tan', 601212345678379878), ('angela', 'yu', 123456789012)
