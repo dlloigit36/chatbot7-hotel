@@ -18,8 +18,9 @@ body {
 /* curent time h1 start here */
 h1 {
   color: #fff;
-  padding: 10px;
+  /* padding: 10px; */
 }
+
 
 a:link, a:visited {
   background-color: #f44336;

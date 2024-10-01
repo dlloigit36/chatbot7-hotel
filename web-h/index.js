@@ -96,6 +96,7 @@ app.get("/", async (req, res) => {
     serviceProfile: currentServiceId,
     requestList: requestByServiceId,
     requestTotal: requestByServiceId.length,
+    shopName: shopName,
     error: error 
   });
 });
