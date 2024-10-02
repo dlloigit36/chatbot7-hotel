@@ -45,7 +45,7 @@ services:
       API_HOSTNAME: api-h
       API_PORT: 3007
       WEB_USERNAME: suisui
-      WEB_USER_PASSWORD: password
+      WEB_USERPASSWORD: "$2b$10$9YajyCgClbL9ztlo/XnlTuwub4p/ikoaSRcIiumXCdgK6ohAb2P7q"
       SHOP_NAME: "Sui-Sui Hotel"
     ports:
       - "3017:3017"

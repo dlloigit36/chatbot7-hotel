@@ -1,6 +1,10 @@
 import express from "express";
 import bodyParser from "body-parser";
 import axios from "axios";
+import passport from "passport";
+import { Strategy } from "passport-local";
+import session from "express-session";
+import bcrypt from "bcrypt";
 
 const app = express();
 // const webPort = 3017;
@@ -9,22 +13,38 @@ const API_HOST = process.env.API_HOSTNAME;
 const API_PORT = process.env.API_PORT;
 const API_URL = `http://${API_HOST}:${API_PORT}`;
 
-// const APIKey = "47f2ac60-6b77-4e12-ae38-577275cfa621";
 const APIKey = process.env.API_ACCESS_KEY;
 const config = {
     params: { key: APIKey}
 };
 
-const userName = process.env.WEB_USERNAME;
-const userPassword = process.env.WEB_USERPASSWORD;
 const shopName = process.env.SHOP_NAME;
-
-
 
 app.use(express.static("public"));
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+app.use(
+  session({
+    secret: "TOPSECRETWORD",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 8
+    }
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
+// authenticate with username name and password from env variable
+const dbUser = [
+  { id: 1,
+    username: process.env.WEB_USERNAME,
+    password: process.env.WEB_USERPASSWORD
+  }
+];
 
 
 let currentServiceId = 1;
@@ -84,45 +104,84 @@ async function getAllFood() {
   return foodList;
 }
 
+// logout
+app.get("/logout", (req, res) => {
+  req.logout(function (err) {
+    if (err) {
+      return next(err);
+    }
+    res.redirect("/");
+  });
+});
+
+// login page
+app.get("/login", (req, res) => {
+  res.render("login.ejs");
+});
+
+// login post page to accept username and password
+app.post(
+  "/login",
+  passport.authenticate("local", {
+    successRedirect: "/",
+    failureRedirect: "/login",
+  })
+);
+
+
 // Route to render the main page
 app.get("/", async (req, res) => {
-  const allService = await getAllService();
-  const requestByServiceId = await getRequestBySid(currentServiceId);
-  console.log("in root / currentServiceId = ", currentServiceId);
-  // console.log("in root / request list by service id = ", requestByServiceId[0]);
-  res.render("index.ejs", { 
-    currentTime: new Date(),
-    serviceList: allService,
-    serviceProfile: currentServiceId,
-    requestList: requestByServiceId,
-    requestTotal: requestByServiceId.length,
-    shopName: shopName,
-    error: error 
-  });
+  // console.log("in home route / before req.isAuthenticated", req.user);
+  if (req.isAuthenticated()) {
+    const allService = await getAllService();
+    const requestByServiceId = await getRequestBySid(currentServiceId);
+    // console.log("in root / currentServiceId = ", currentServiceId);
+    // console.log("in root / request list by service id = ", requestByServiceId[0]);
+    res.render("index.ejs", { 
+      currentTime: new Date(),
+      serviceList: allService,
+      serviceProfile: currentServiceId,
+      requestList: requestByServiceId,
+      requestTotal: requestByServiceId.length,
+      shopName: shopName,
+      error: error 
+    });
+  } else {
+    console.log("not authenticated");
+    res.redirect("/login");
+  }
+  
+  
 });
 
 // a route to get service id and display new tab for front desk/kitchen service id
 app.post("/service", async (req, res) => {
-  switch (req.body.service) {
-    case "newFood":
-      res.redirect("/foodmenu");
-      break;
+  if (req.isAuthenticated()) {
+      switch (req.body.service) {
+      case "newFood":
+        res.redirect("/foodmenu");
+        break;
 
-    case "addGuest":
-      res.redirect("/addguest")
-      break;
-  
-    default:
-      currentServiceId = req.body.service;
-      res.redirect("/");
-      break;
+      case "addGuest":
+        res.redirect("/addguest")
+        break;
+    
+      default:
+        currentServiceId = req.body.service;
+        res.redirect("/");
+        break;
+    }
+  } else {
+    console.log("not authenticated in service post");
   }
-  console.log("in /service printing req.body.service value = ", req.body.service);
+  
+  // console.log("in /service printing req.body.service value = ", req.body.service);
   
 });
 
 // a route a accept service status id hit from Acknowledge button
 app.get("/rstatus/ack/:statusId", async (req, res) => {
+  if (req.isAuthenticated()) {
     let requestStatusId = parseInt(req.params.statusId);
     console.log("in /rstatus/ack/:statusId request_status.id = ", requestStatusId);
 
@@ -144,11 +203,16 @@ app.get("/rstatus/ack/:statusId", async (req, res) => {
     }
 
     res.redirect("/");
+  } else {
+    console.log("not authenticated in rstatus/ack");
+  }
+    
 });
 
 // a route a accept service status id hit from Delivered button
 app.get("/rstatus/delivered/:statusId", async (req, res) => {
-  let requestId = parseInt(req.params.statusId);
+  if (req.isAuthenticated()) {
+    let requestId = parseInt(req.params.statusId);
   console.log("in /rstatus/delivered/:statusId request_status.id = ", requestId);
 
   let currentDate = new Date();
@@ -168,241 +232,315 @@ app.get("/rstatus/delivered/:statusId", async (req, res) => {
     }
 
     res.redirect("/");
+  } else {
+    console.log("not authenticated in rstatus/delivered")
+  }
+  
 });
 
 // a route to show page to search guest details by mobile number
 app.get("/addguest", async (req, res) => {
-  // sample return guest details from API 
-  let returnGuestDetail = [];
+  if (req.isAuthenticated()){
+      // sample return guest details from API 
+    let returnGuestDetail = [];
 
-  let searchMobile = true;
-  let foundAddStay = false;
-  let newAddStay = false;
-  res.render("add-guest.ejs", {
-    searchMobile: searchMobile,
-    foundAddStay: foundAddStay,
-    newAddStay: newAddStay,
-    guestDetail: returnGuestDetail,
-    message: "this is test message"
-  });
+    let searchMobile = true;
+    let foundAddStay = false;
+    let newAddStay = false;
+    res.render("add-guest.ejs", {
+      searchMobile: searchMobile,
+      foundAddStay: foundAddStay,
+      newAddStay: newAddStay,
+      guestDetail: returnGuestDetail,
+      message: "this is test message"
+    });
+  } else {
+    console.log("not authenticated in addguest");
+  }
+  
 });
 
 // route where guest mobile entered and search button clicked
 app.post("/searchbytel", async (req, res) => {
-  let guestTel = req.body.tel;
-  // console.log("entered guest bobile number = ", guestTel);
+  if (req.isAuthenticated()) {
+      let guestTel = req.body.tel;
+    // console.log("entered guest bobile number = ", guestTel);
 
-  let searchMobile = true;
-  let foundAddStay = true;
-  let newAddStay = true;
-  let telInSearch = "";
+    let searchMobile = true;
+    let foundAddStay = true;
+    let newAddStay = true;
+    let telInSearch = "";
 
-  let returnGuestDetail = [];
-  try {
-    returnGuestDetail = await getGuestByTel(guestTel);
+    let returnGuestDetail = [];
+    try {
+      returnGuestDetail = await getGuestByTel(guestTel);
+      
+    } catch (error) {
+      console.log("error query guest list by tel number got error=", error);
+    }
     
-  } catch (error) {
-    console.log("error query guest list by tel number got error=", error);
+
+    // if search return no record, render add guest and stay
+    // else render add stay with guest details populated
+    if (returnGuestDetail.length == 0) {
+      searchMobile = false;
+      foundAddStay = false;
+      newAddStay = true;
+    } else if (returnGuestDetail.length != 0) {
+      searchMobile = false;
+      foundAddStay = true;
+      newAddStay = false;
+    }
+
+    
+    res.render("add-guest.ejs", {
+      searchMobile: searchMobile,
+      foundAddStay: foundAddStay,
+      newAddStay: newAddStay,
+      guestDetail: returnGuestDetail,
+      telInSearch: guestTel,
+      message: "this is test message"
+    });
+  } else {
+    console.log("not authenticated in searchbytel");
   }
   
-
-  // if search return no record, render add guest and stay
-  // else render add stay with guest details populated
-  if (returnGuestDetail.length == 0) {
-    searchMobile = false;
-    foundAddStay = false;
-    newAddStay = true;
-  } else if (returnGuestDetail.length != 0) {
-    searchMobile = false;
-    foundAddStay = true;
-    newAddStay = false;
-  }
-
-  
-  res.render("add-guest.ejs", {
-    searchMobile: searchMobile,
-    foundAddStay: foundAddStay,
-    newAddStay: newAddStay,
-    guestDetail: returnGuestDetail,
-    telInSearch: guestTel,
-    message: "this is test message"
-  });
 });
 
 // a route search tel return guest details. POST existing guest details with room number and check-in date and out
 app.post("/addgueststay", async (req, res) => {
-  let guestId = req.body.guestId;
-  // let guestFirstname = req.body.guestFirstname;
-  // let guestLastName = req.body.guestLastName;
-  // let guestTel = req.body.guestTel;
-  // let roomNumber = req.body.roomNumber;
-  // let checkInDate = req.body.checkInDate;
-  // let checkOutDate = req.body.checkOutDate;
-
-  let postGustStay = {
-    guestId: req.body.guestId,
-    roomNumber: req.body.roomNumber,
-    checkInDate: req.body.checkInDate,
-    checkOutDate: req.body.checkOutDate
-  };
-  // pass guest stay information to back end API server
-  try {
-    const result = await axios.post(API_URL + "/post/gueststay", postGustStay, config);
-    console.log("post guest_stay record done for guest id = ", guestId, "return =",result.data);
+  if (req.isAuthenticated()) {
+      let guestId = req.body.guestId;
     
-  } catch (error) {
-    console.log("error connecting to API = ", error.stack);
-  }
+    let postGustStay = {
+      guestId: req.body.guestId,
+      roomNumber: req.body.roomNumber,
+      checkInDate: req.body.checkInDate,
+      checkOutDate: req.body.checkOutDate
+    };
+    // pass guest stay information to back end API server
+    try {
+      const result = await axios.post(API_URL + "/post/gueststay", postGustStay, config);
+      console.log("post guest_stay record done for guest id = ", guestId, "return =",result.data);
+      
+    } catch (error) {
+      console.log("error connecting to API = ", error.stack);
+    }
 
+    
+    res.redirect("/addguest");
+  } else {
+    console.log("not authenticated in post addgueststay");
+  }
   
-  res.redirect("/addguest");
 });
 
 // a route search tel return no record. POST new complete guest details and others.
 app.post("/addguestandstay", async (req, res) => {
-  // no guest id as guest record not exist. this to create guest record then add stay
-  // let guestFirstname = req.body.guestFirstname;
-  // let guestLastName = req.body.guestLastName;
-  // let guestTel = req.body.guestTel;
-  // let roomNumber = req.body.roomNumber;
-  // let checkInDate = req.body.checkInDate;
-  // let checkOutDate = req.body.checkOutDate;
-
-  let postGuestAndStay= {
-    guestFirstname: req.body.guestFirstname,
-    guestLastName: req.body.guestLastName,
-    guestTel: req.body.guestTel,
-    roomNumber: req.body.roomNumber,
-    checkInDate: req.body.checkInDate,
-    checkOutDate: req.body.checkOutDate
-  };
-
-  // pass guest details and stay information to back end API server
-  try {
-    const result = await axios.post(API_URL + "/post/addguestandstay", postGuestAndStay, config);
-    console.log("posted guest_detail and guest_stay record done for new guest. return =", result.data);
+  if (req.isAuthenticated()) {
+      // no guest id as guest record not exist. this to create guest record then add stay
     
-  } catch (error) {
-    console.log("error connecting to API = ", error.stack);
-  }
+    let postGuestAndStay= {
+      guestFirstname: req.body.guestFirstname,
+      guestLastName: req.body.guestLastName,
+      guestTel: req.body.guestTel,
+      roomNumber: req.body.roomNumber,
+      checkInDate: req.body.checkInDate,
+      checkOutDate: req.body.checkOutDate
+    };
 
-  res.redirect("/addguest");
+    // pass guest details and stay information to back end API server
+    try {
+      const result = await axios.post(API_URL + "/post/addguestandstay", postGuestAndStay, config);
+      console.log("posted guest_detail and guest_stay record done for new guest. return =", result.data);
+      
+    } catch (error) {
+      console.log("error connecting to API = ", error.stack);
+    }
+
+    res.redirect("/addguest");
+  } else {
+    console.log("not authenticated in post addguestandstay");
+  }
+  
 });
 
 
 
 // a route to edit food menu
 app.get("/foodmenu", async (req, res) => {
-  const qFoodList = await getAllFood();
+  if (req.isAuthenticated()) {
+    const qFoodList = await getAllFood();
   // console.log(qFoodList);
 
   res.render("foodmenu.ejs", {
     foodList: qFoodList
   });
+  } else {
+    res.redirect("/");
+    console.log("not authenticated in get foodmenu");
+  }
+  
 });
 
 // a route to get selected food items for render into mmodifyfood.ejs
 app.get("/fooditem/edit/:id", async (req, res) => {
   // http://localhost:3007/foodmenu/search?id=2
-  const id = parseInt(req.params.id);
-  // console.log("inside GET /fooditem/edit/:id foodID =", id);
-  // const editFoodIndex = foodList.findIndex((food) => food.id === id);
-  // console.log(foodList[editFoodIndex]);
-  let editFoodItem = [];
-  try {
-    const result = await axios.get(API_URL + "/foodmenu/search?id="+ id, config);
-    // console.log("GET to get food menu item by id = ", id, "return =",result.data);
-    editFoodItem = result.data;
-    
-  } catch (error) {
-    console.log("error connecting to API = ", error.stack);
+  if (req.isAuthenticated()) {
+      const id = parseInt(req.params.id);
+    // console.log("inside GET /fooditem/edit/:id foodID =", id);
+    // const editFoodIndex = foodList.findIndex((food) => food.id === id);
+    // console.log(foodList[editFoodIndex]);
+    let editFoodItem = [];
+    try {
+      const result = await axios.get(API_URL + "/foodmenu/search?id="+ id, config);
+      // console.log("GET to get food menu item by id = ", id, "return =",result.data);
+      editFoodItem = result.data;
+      
+    } catch (error) {
+      console.log("error connecting to API = ", error.stack);
+    }
+
+
+    res.render("modifyfood.ejs", {
+      editFoodItem: editFoodItem[0]
+    });
+  } else {
+    console.log("not authenticated in get fooditem/edit/id");
   }
-
-
-  res.render("modifyfood.ejs", {
-    editFoodItem: editFoodItem[0]
-  });
+  
 });
 
 // a route when updated food item POST hits
 app.post("/fooditem/edit/:id", async (req, res) => {
-  const id = parseInt(req.params.id);
-  
-  let updateFoodItem = {
-    id: id,
-    title: req.body.foodTitle,
-    type: req.body.foodType,
-    description: req.body.foodDescription,
-    price: req.body.foodPrice
-  }
-
-  try {
-    const result = await axios.patch(API_URL + "/patch/foodmenu/"+ id, updateFoodItem, config);
-    console.log("patch food_menu item done for food id = ", id, "return =",result.data);
+  if (req.isAuthenticated()) {
+      const id = parseInt(req.params.id);
     
-  } catch (error) {
-    console.log("error connecting to API = ", error.stack);
+    let updateFoodItem = {
+      id: id,
+      title: req.body.foodTitle,
+      type: req.body.foodType,
+      description: req.body.foodDescription,
+      price: req.body.foodPrice
+    }
+
+    try {
+      const result = await axios.patch(API_URL + "/patch/foodmenu/"+ id, updateFoodItem, config);
+      console.log("patch food_menu item done for food id = ", id, "return =",result.data);
+      
+    } catch (error) {
+      console.log("error connecting to API = ", error.stack);
+    }
+
+    // console.log(updateFoodItem);
+    
+    res.redirect("/foodmenu");
+
+  } else {
+    console.log("not authenticated in post fooditem/edit/id");
   }
-
-  // console.log(updateFoodItem);
   
-  res.redirect("/foodmenu");
-
 });
 
 // a route to delete secleted food with foodId
 app.get("/fooditem/delete/:id", async (req, res) => {
-  // const id = parseInt(req.params.id);
-  // console.log("inside GET /fooditem/delete/:id foodID =", req.params.id);
+  if (req.isAuthenticated()) {
+      // const id = parseInt(req.params.id);
+    // console.log("inside GET /fooditem/delete/:id foodID =", req.params.id);
 
-  try {
-    const qResult = await axios.delete(`${API_URL}/delete/foodmenu/${req.params.id}`, config);
-    console.log("delete food item done for food id = ", req.params.id, "return =", qResult.data);
-    
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting selected food item" });
+    try {
+      const qResult = await axios.delete(`${API_URL}/delete/foodmenu/${req.params.id}`, config);
+      console.log("delete food item done for food id = ", req.params.id, "return =", qResult.data);
+      
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting selected food item" });
+    }
+
+    res.redirect("/foodmenu");
+  } else {
+    console.log("not authenticated in get fooditem/delete/id");
   }
 
-  res.redirect("/foodmenu");
-  
-  
 });
 
 // a route to add new food
 app.get("/newfood", async (req, res) => {
-  res.render("modifyfood.ejs");
+  if (req.isAuthenticated()) {
+    res.render("modifyfood.ejs");
+  } else {
+    res.redirect("/");
+    console.log("not authenticated in get newfood");
+  }
+  
 });
 
 // a route where addnewfood page button Add to be hit
 app.post("/addnewfood", async (req, res) => {
-  // let foodTitle = req.body.foodTitle;
-  // let foodDescription = req.body.foodDescription;
-  // let foodType = req.body.foodType;
-  // let foodPrice = parseFloat(req.body.foodPrice);
+  if (req.isAuthenticated()) {
+      let postNewFood= {
+      foodTitle: req.body.foodTitle,
+      foodDescription: req.body.foodDescription,
+      foodType: req.body.foodType,
+      foodPrice: parseFloat(req.body.foodPrice)
+    };
 
-  // console.log("in POST /addnewfood, foodTitle =", foodTitle);
-  // console.log("in POST /addnewfood, foodDescription =", foodDescription);
-  // console.log("in POST /addnewfood, foodType =", foodType);
-  // console.log("in POST /addnewfood, foodPrice =", foodPrice);
+    // pass food details and entered information to back end API server
+    try {
+      const result = await axios.post(API_URL + "/fooditem/addfood", postNewFood, config);
+      console.log("posted food_menu with new food item. return =", result.data);
+      
+    } catch (error) {
+      console.log("error connecting to API = ", error.stack);
+    }
 
-  let postNewFood= {
-    foodTitle: req.body.foodTitle,
-    foodDescription: req.body.foodDescription,
-    foodType: req.body.foodType,
-    foodPrice: parseFloat(req.body.foodPrice)
-  };
 
-  // pass guest details and stay information to back end API server
-  try {
-    const result = await axios.post(API_URL + "/fooditem/addfood", postNewFood, config);
-    console.log("posted food_menu with new food item. return =", result.data);
-    
-  } catch (error) {
-    console.log("error connecting to API = ", error.stack);
+    res.redirect("/foodmenu");
+  } else {
+    res.redirect("/");
+    console.log("not authenticated in post addnewfood");
   }
 
+  
+});
 
-  res.redirect("/foodmenu");
+// manage logon session and cookie
+passport.use(new Strategy(function verify(username, password, cb) {
+  // console.log(username);
+  // console.log(password);
+  try {
+    const result = dbUser;
+    if (result.length > 0) {
+      const user = result[0];
+      const storedHashedPassword = user.password;
+      bcrypt.compare(password, storedHashedPassword, (err, valid) => {
+        if (err) {
+          //Error with password check
+          console.error("Error comparing passwords:", err);
+          return cb(err);
+        } else {
+          if (valid) {
+            //Passed password check
+            return cb(null, user);
+          } else {
+            //Did not pass password check
+            console.log("Did not pass password check");
+            return cb(null, false);
+          }
+        }
+      });
+    } else {
+      return cb("User not found");
+    }
+  } catch (err) {
+    console.log(err);
+  }
+}))
+
+passport.serializeUser((user, cb) => {
+  cb(null, user);
+});
+passport.deserializeUser((user, cb) => {
+  cb(null, user);
 });
 
 
