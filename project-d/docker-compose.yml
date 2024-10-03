@@ -47,6 +47,7 @@ services:
       WEB_USERNAME: suisui
       WEB_USERPASSWORD: "$2b$10$9YajyCgClbL9ztlo/XnlTuwub4p/ikoaSRcIiumXCdgK6ohAb2P7q"
       SHOP_NAME: "Sui-Sui Hotel"
+      SESSION_SECRET: "TOPJOKEOFTHEDAY"
     ports:
       - "3017:3017"
     deploy:

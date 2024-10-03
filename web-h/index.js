@@ -13,6 +13,7 @@ const API_HOST = process.env.API_HOSTNAME;
 const API_PORT = process.env.API_PORT;
 const API_URL = `http://${API_HOST}:${API_PORT}`;
 
+
 const APIKey = process.env.API_ACCESS_KEY;
 const config = {
     params: { key: APIKey}
@@ -27,7 +28,7 @@ app.use(bodyParser.json());
 
 app.use(
   session({
-    secret: "TOPSECRETWORD",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
     cookie: {
@@ -509,7 +510,7 @@ passport.use(new Strategy(function verify(username, password, cb) {
   // console.log(password);
   try {
     const result = dbUser;
-    if (result.length > 0) {
+    if (result[0].username === username) {
       const user = result[0];
       const storedHashedPassword = user.password;
       bcrypt.compare(password, storedHashedPassword, (err, valid) => {
