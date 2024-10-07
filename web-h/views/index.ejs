@@ -69,7 +69,8 @@
             Quantity: <%=request.quantity%>
           </small>
           <small>
-            Requested time: <%=request.requested_d %>
+            Requested: <%= new Date(request.requested_d).toLocaleDateString(["en-MY"]) %> 
+            <%= new Date(request.requested_d).toLocaleTimeString(["en-MY"]) %>
           </small>
           <small>Acknowledged: <%=request.acknowledged%> </small>
           <small>Delivered: <%=request.delivered%> </small>
